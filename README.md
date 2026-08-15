@@ -1,63 +1,54 @@
-# RemzyForge AI
+# ReelForge
 
-Original AI video studio: **idea → script → storyboard → scenes → images → motion → voice → captions → music → edit → export**.
+Open-source **text → video** studio for YouTube and social media.
 
-This is an independent implementation. It does not copy proprietary code, branding, UI, or assets from any commercial product.
+Turn a topic or script into a narrated, captioned video with camera motion — sized for **16:9** (YouTube) or **9:16** (Shorts / Reels / TikTok), up to **12 minutes**.
 
-Phase 1 is implemented: local studio (no sign-in), projects, PostgreSQL/SQLite schema, model registry, and a professional generate card.
+## Why this stack (for longer videos)
 
-## Repository
+Pure AI video models (SVD, CogVideo, etc.) usually max out at a few seconds. ReelForge uses the open pipeline that actually scales to minutes:
 
-```
-apps/web            Next.js 15 studio
-apps/api            FastAPI gateway
-apps/workers        GPU / mock workers
-apps/render         FFmpeg renderer
-packages/ai         MODEL_REGISTRY + providers
-packages/database   SQLAlchemy models
-packages/prompts    PromptCompiler + adapters
-packages/types      Shared TypeScript types
-packages/config     Credit costs (not hardcoded)
-infrastructure/     Docker, Kubernetes, Terraform
-```
+| Stage | Open tool |
+|-------|-----------|
+| Script | Pollinations LLM (free) + local fallback |
+| Scene images | Pollinations Flux/Turbo + local stylized frames |
+| Voice | [edge-tts](https://github.com/rany2/edge-tts) (Microsoft neural voices, free) |
+| Motion | Ken Burns / zoom / pan via **FFmpeg** (or browser canvas) |
+| Captions | Burned into the frame |
+| Export | **MP4** (FFmpeg) or WebM (browser fallback) |
 
-## Phase 1 local run (no Docker / GPU)
+## Features
 
-```bash
-cd remzyforge-ai
-cp .env.example .env
+- Aspect switch: **16:9** ↔ **9:16**
+- Target length: 30s → **12 minutes**
+- Burn-in captions (on/off)
+- Motion styles: Ken Burns, zoom-in, pan left/right
+- Multi-scene assembly for long-form narration
+- No paid API keys required
 
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e packages/database -e packages/ai -e apps/api
-
-cd apps/api
-PYTHONPATH=".:../../packages/database:../../packages/ai" uvicorn app.main:app --reload --port 8000
-```
-
-In another terminal:
+## Setup
 
 ```bash
-cd apps/web
+cd youtube-ai-studio
 npm install
+npm run setup          # creates .venv + edge-tts
+brew install ffmpeg    # required for multi-minute MP4 export
 npm run dev
 ```
 
-Open http://localhost:3000 — create a studio, then a project.
+Open http://localhost:5173
 
-API docs: http://localhost:8000/docs
+## Workflow
 
-## Tests
+1. Pick **16:9** or **9:16**
+2. Paste your script **or** enter a topic + target length
+3. Optionally toggle captions and motion style
+4. Generate video (FFmpeg MP4 preferred when installed)
+5. Download and upload to YouTube / Shorts / Reels
 
-```bash
-cd apps/api
-PYTHONPATH=".:../../packages/database:../../packages/ai" pytest -q
-```
+## Notes
 
-## Models
-
-`packages/ai/remzyforge_ai/registry.py` is the single catalog. Application services depend on the registry, not a hardcoded model name.
-
-Development defaults to mock providers (`MOCK_VIDEO_PROVIDER=true`) so the workflow can be built without CUDA.
-
-Open http://localhost:3000 or http://localhost:3001 — no account required.
+- Keep the browser tab focused only for **browser** WebM renders
+- FFmpeg renders run on the server and are better for 5–12 minute videos
+- If the free image API is rate-limited, stylized local frames are used automatically
+- Scene images can be replaced with your own uploads
