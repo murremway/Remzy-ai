@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: remzyforge-db
+Version: 0.1.0
+Requires-Python: >=3.11
+Requires-Dist: sqlalchemy>=2.0.36

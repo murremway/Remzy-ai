@@ -1,0 +1,5 @@
+FROM python:3.12-slim
+WORKDIR /app
+COPY apps/workers /app/apps/workers
+ENV WORKER_KIND=image
+CMD ["python", "/app/apps/workers/worker.py"]

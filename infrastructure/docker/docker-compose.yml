@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: remzy
+      POSTGRES_PASSWORD: remzy
+      POSTGRES_DB: remzyforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.api
+    environment:
+      DATABASE_URL: postgresql+asyncpg://remzy:remzy@postgres:5432/remzyforge
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: change-me-in-production
+      CORS_ORIGINS: http://localhost:3000
+      MOCK_VIDEO_PROVIDER: "true"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/Dockerfile.web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
